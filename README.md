@@ -1,6 +1,7 @@
 # MovingPlatform
 
 A lightweight configurable moving platform system for Godot 4 featuring resource-driven movement, multiple platform modes, and an extensible activator/trigger system.
+Inspired by [LukeCGG Moving Platforms Plugin](https://github.com/LukeCGG/MovingPlatformsAnimatedEASY)
 
 This repository contains:
 - A demo scene showing common use cases  
