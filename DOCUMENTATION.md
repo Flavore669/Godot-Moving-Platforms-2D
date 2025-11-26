@@ -31,9 +31,9 @@ This document explains all configuration options, platform modes, signal behavio
 4. Configure duration, easing, and process mode in the tween resource.
 
 ### Activator Setup (Triggered Types)
-For TRIGGERED, TOGGLE, or ONE_WAY platforms:
 1. Add an `Activator` node or reference an existing one.
 2. The platform automatically connects to its activation signals.
+TRIGGERED, TOGGLE, or ONE_WAY platforms require an Activator
 
 ---
 
