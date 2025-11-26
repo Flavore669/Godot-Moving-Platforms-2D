@@ -32,7 +32,7 @@ enum DurationMode { DURATION, CONSTANT_SPEED }
 
 var tween: Tween
 
-func apply_tween(node: Node, property: NodePath, initial_value, target_value, distance: float = 0.0) -> Tween:
+func tween_property(node: Node, property: NodePath, initial_value, target_value, distance: float = 0.0) -> Tween:
 	if node == null:
 		push_error("TweenResource: Node is null")
 		return null
@@ -78,7 +78,7 @@ func apply_tween(node: Node, property: NodePath, initial_value, target_value, di
 	
 	return tween
 
-func apply_method_tween(node: Node, method: StringName, initial_value, target_value, distance: float = 0.0) -> Tween:
+func tween_method(node: Node, method: StringName, initial_value, target_value, distance: float = 0.0) -> Tween:
 	if node == null:
 		push_error("TweenResource: Node is null")
 		return null

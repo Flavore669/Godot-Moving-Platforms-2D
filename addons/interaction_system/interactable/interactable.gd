@@ -2,10 +2,15 @@ extends Node2D
 class_name Interactable
 
 @export var activator : Activator : set = _set_activator
-@export var is_active: bool = false
+@export var start_active: bool = false
+
+var is_active: bool = false
 
 func _ready() -> void:
 	_setup_connections()
+	await get_tree().process_frame
+	if start_active:
+		_activated()
 
 func _set_activator(value): # Setter
 	activator = value

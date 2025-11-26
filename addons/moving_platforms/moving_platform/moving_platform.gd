@@ -19,7 +19,7 @@ signal moving_backward
 # Node references
 @export_category("References")
 @export var final_pos_marker : Marker2D
-@export var other_platforms : Array[MovingPlatform] = []
+@export var subsequent_platforms : Array[MovingPlatform] = []
 @export_group("Components")
 @export var platform: AnimatableBody2D
 @export var platform_line: Line2D
@@ -28,13 +28,7 @@ var original_position: Vector2
 var current_tween: Tween  # We need to store this for TRIGGERED/TOGGLE states
 
 func _ready() -> void:
-	# Create default TweenResource if none is assigned
-	if not tween_resource:
-		tween_resource = TweenResource.new()
-		push_warning("No Tween Resource Created In Inspector -> Created a new one")
-	if not config:
-		config = MovingPlatformConfig.new()
-		push_warning("No Platform Config Created In Inspector -> Created a new one")
+	_check_connections()
 	
 	original_position = global_position 
 	_update_path_visualization()        
@@ -42,7 +36,7 @@ func _ready() -> void:
 	if activator:
 		return
 	
-	if config and config.type == config.PlatformType.LOOP and config.move_on_ready: 
+	if config and config.type == config.PlatformType.LOOP: 
 		move()
 
 func _update_path_visualization() -> void:
@@ -56,18 +50,26 @@ func _update_path_visualization() -> void:
 		platform_line.add_point(to_local(final_pos_marker.global_position))
 	platform_line.queue_redraw()
 
-func _setup_connections() -> void:
-	if not activator or not config:
-		push_warning("MovingPlatform: Missing activator or config, cannot setup connections")
+func _check_connections() -> void:
+	# Create default TweenResource if none is assigned
+	if not tween_resource:
+		tween_resource = TweenResource.new()
+		push_warning("No Tween Resource Created In Inspector -> Created a new one")
+	else:
+		tween_resource = tween_resource.duplicate() # Avoid shared references
+	
+	if not config:
+		config = MovingPlatformConfig.new()
+		push_warning("No Platform Config Created In Inspector -> Created a new one")
+		
+	if not activator:
+		push_error(name + " is missing activator, cannot setup connections")
 		return
 		
-	if config.type in [MovingPlatformConfig.PlatformType.ONE_WAY, MovingPlatformConfig.PlatformType.TRIGGERED, MovingPlatformConfig.PlatformType.TOGGLE]:
-		if activator.activated.connect(_activated) != OK:
-			push_error("MovingPlatform: Failed to connect activated signal")
-		if activator.deactivated.connect(_deactivated) != OK:
-			push_error("MovingPlatform: Failed to connect deactivated signal")
-	else:
-		push_warning("MovingPlatform: This is an auto platform; Are you sure you want an activator?")
+	if !activator.activated.is_connected(_activated) and activator.activated.connect(_activated) != OK:
+		push_error("Platform " + name + " failed to connect activated signal")
+	if !activator.activated.is_connected(_activated) and activator.deactivated.connect(_deactivated) != OK:
+		push_error("Platform " + name + " failed to connect deactivated signal")
 
 func move() -> void:
 	if !config:
@@ -118,7 +120,7 @@ func move() -> void:
 		
 		MovingPlatformConfig.PlatformType.TRIGGERED, MovingPlatformConfig.PlatformType.TOGGLE, MovingPlatformConfig.PlatformType.ONE_WAY:
 			# Use TweenResource to create the tween but store it for later control
-			var tween = tween_resource.apply_tween(platform, "global_position", current_pos, end_pos, remaining_distance)
+			var tween = tween_resource.tween_property(platform, "global_position", current_pos, end_pos, remaining_distance)
 			if not tween:
 				push_error("MovingPlatform: Failed to create tween from resource")
 				return
@@ -132,13 +134,13 @@ func move() -> void:
 	
 	moving_forward.emit()
 	
-	if config.subsequent_delay > 0 and other_platforms.size() > 0:
+	if config.subsequent_delay > 0 and subsequent_platforms.size() > 0:
 		await get_tree().create_timer(config.subsequent_delay).timeout
-		for other_platform in other_platforms:
+		for other_platform in subsequent_platforms:
 			if other_platform:
 				other_platform.move()
 			else:
-				push_warning("MovingPlatform: Invalid platform in other_platforms array")
+				push_warning("MovingPlatform: Invalid platform in subsequent_platforms array")
 
 func play_backwards() -> void:
 	if !config:
@@ -171,17 +173,19 @@ func play_backwards() -> void:
 	moving_backward.emit()
 
 func _activated() -> void:
-	if !config or !final_pos_marker: 
-		push_warning("MovingPlatform: Cannot activate - missing config or final_pos_marker")
-		return
+	_check_connections()
+	
 	
 	match config.type:
-		MovingPlatformConfig.PlatformType.TRIGGERED, MovingPlatformConfig.PlatformType.ONE_WAY:
-			move()
+		MovingPlatformConfig.PlatformType.LOOP:
 			if current_tween:
-				current_tween.play()  # Resume if paused
+				if !current_tween.is_running():
+					move()
+			else:
+				move()
 		
-		MovingPlatformConfig.PlatformType.TOGGLE:
+		
+		_:
 			move()
 			if current_tween:
 				current_tween.play()  # Resume if paused

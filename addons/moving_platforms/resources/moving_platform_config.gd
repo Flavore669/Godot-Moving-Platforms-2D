@@ -15,8 +15,7 @@ enum PlatformType {
 @export var type: PlatformType = PlatformType.LOOP
 @export var stopframe : float = 0.1     # Pause duration at path ends for LOOP type
 @export var delay : float = 0.0
-@export var move_on_ready : bool = true # Flag for LOOP movement user can adjust
-@export_group("Toggle Specific")
+@export_group("Toggle Mode Configuration")
 @export var backwards_scale := 1.0
 
 @export_group("Subsequently Activating Platforms")
